@@ -9,6 +9,7 @@ const Flatted = require('flatted')
 const Joi = require('joi')
 const logger = require('../common/logger')
 const { handleSubmission } = require('legacy-processor-module/AllSubmissionService')
+const LegacySubmissionIdService = require('legacy-processor-module/LegacySubmissionIdService')
 const { handleMarathonSubmission, updateReviewScore } = require('./MarathonSubmissionService')
 
 // Custom Joi type
@@ -120,6 +121,38 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
       await updateReviewScore(Axios, m2m, event, db)
     } else {
       logger.debug(`Skipped Invalid typeId`)
+    }
+  } else if (event.payload.resource && event.payload.resource === 'reviewreviewSummation') {
+    if (event.topic === config.KAFKA_UPDATE_SUBMISSION_TOPIC) {
+      const axios = Axios.create({
+        baseURL: config.SUBMISSION_API_URL,
+        timeout: config.SUBMISSION_TIMEOUT
+      })
+    
+      let reviewScore = _.get(event, 'payload.aggregateScore')
+      let submissionId = _.get(event, 'payload.submissionId')
+      
+      // M2M token necessary for pushing to Bus API
+      let apiOptions = null
+      if (m2m) {
+        const token = await m2m.getMachineToken(config.AUTH0_CLIENT_ID, config.AUTH0_CLIENT_SECRET)
+        apiOptions = { headers: { 'Authorization': `Bearer ${token}` } }
+      }
+    
+      let sub = await axios.get(`/submissions/${submissionId}`, apiOptions)
+      sub = sub.data
+      if (!sub.legacySubmissionId) {
+        throw new Error(`legacySubmissionId not found`)
+      }
+
+      const subTrack = await getSubTrack(sub.challengeId)
+      logger.debug(`Challenge ${sub.challengeId} get subTrack ${subTrack}`)
+      const challangeSubtracks = config.CHALLENGE_SUBTRACK.split(',').map(x => x.trim())
+
+      if (subTrack && challangeSubtracks.includes(subTrack)) {
+        await LegacySubmissionIdService.updateReviewScore(db, sub.legacySubmissionId, reviewScore, 'finalScore')
+        logger.debug(`Successfully updated final score: ${JSON.stringify(event, null, 2)}`)
+      }
     }
   } else {
     if (event.payload.resource !== 'submission') {
