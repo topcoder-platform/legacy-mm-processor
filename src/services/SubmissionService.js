@@ -23,7 +23,7 @@ const eventSchema = Joi.object().keys({
   'mime-type': Joi.string().required(),
   payload: Joi.object().keys({
     id: Joi.alternatives().try(Joi.id(), Joi.string().uuid()).required(),
-    resource: Joi.alternatives().try(Joi.string().valid('submission'), Joi.string().valid('review')),
+    resource: Joi.alternatives().try(Joi.string().valid('submission'), Joi.string().valid('review'), Joi.string().valid('reviewSummation')),
     challengeId: Joi.id().optional(),
     memberId: Joi.id().optional(),
     submissionPhaseId: Joi.id().optional(),
