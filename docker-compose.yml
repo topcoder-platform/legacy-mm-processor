@@ -81,7 +81,7 @@ services:
 
   lsp-app-install:
     build:
-      context: ./docker/legacy-submission-processor
+      context: ./docker/legacy-mm-processor
       args:
         servername: ${DB_SERVER_NAME}
     image: lsp-app:latest
@@ -91,7 +91,7 @@ services:
 
   lsp-app:
     build:
-      context: ./docker/legacy-submission-processor
+      context: ./docker/legacy-mm-processor
       args:
         servername: ${DB_SERVER_NAME}
     image: lsp-app:latest
@@ -130,7 +130,7 @@ services:
 
   lsp-app-staging:
     build:
-      context: ./docker/legacy-submission-processor
+      context: ./docker/legacy-mm-processor
       args:
         servername: ${DB_SERVER_NAME}
     image: lsp-app-staging:latest
@@ -156,7 +156,7 @@ services:
 
   lsp-app-prod:
     build:
-      context: ./docker/legacy-submission-processor
+      context: ./docker/legacy-mm-processor
       args:
         servername: ${DB_SERVER_NAME}
     image: lsp-app-prod:latest

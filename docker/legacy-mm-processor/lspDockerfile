@@ -16,7 +16,7 @@ RUN wget -q -O node8.tar.xz https://nodejs.org/dist/v8.11.3/node-v8.11.3-linux-x
 ENV SERVERNAME=$servername
 ENV SERVERPORT=$port
 
-COPY docker/legacy-submission-processor/esql /opt/ibm/informix/bin/
+COPY docker/legacy-mm-processor/esql /opt/ibm/informix/bin/
 RUN chmod +x /opt/ibm/informix/bin/esql
 RUN echo "informixoltp_tcp        onsoctcp        $SERVERNAME               sqlexec" \
   > /opt/ibm/informix/etc/sqlhosts.informixoltp_tcp

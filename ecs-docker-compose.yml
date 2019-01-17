@@ -35,14 +35,14 @@ services:
   lsp-app:
     build:
       context: ./
-      dockerfile: docker/legacy-submission-processor/lspDockerfile
+      dockerfile: docker/legacy-mm-processor/lspDockerfile
     image: lsp-app:latest
     container_name: lsp-app
 
   lsp-app-test:
     build:
       context: ./
-      dockerfile: docker/legacy-submission-processor/lspDockerfile
+      dockerfile: docker/legacy-mm-processor/lspDockerfile
     image: lsp-app-test:latest
     container_name: lsp-app-test
     environment:
