@@ -18,7 +18,7 @@ RUN chown -R app /app
 # copy informix library
 RUN ./app/download_s3.sh "${S3_FILE}" "${S3_BUCKET}" "${S3_KEY}" "${S3_SECRET}" | tar -C / -xz -f -
 
-COPY docker/legacy-submission-processor/esql /opt/ibm/informix/bin/
+COPY docker/legacy-mm-processor/esql /opt/ibm/informix/bin/
 RUN chmod a+rx /opt/ibm/informix/bin/esql
 RUN echo "informixoltp_tcp        onsoctcp        $SERVERNAME               sqlexec" \
   > /opt/ibm/informix/etc/sqlhosts.informixoltp_tcp
