@@ -2,13 +2,13 @@
  * The main entry of the application.
  */
 const logger = require('./src/common/logger')
-const tracer = require('dd-trace').init({
-  logger: {
-    debug: message => logger.debug(message),
-    error: err => logger.error(err)
-  },
-  debug: true
-})
+// const tracer = require('dd-trace').init({
+//   logger: {
+//     debug: message => logger.debug(message),
+//     error: err => logger.error(err)
+//   },
+//   debug: true
+// })
 require('./src/bootstrap')
 
 

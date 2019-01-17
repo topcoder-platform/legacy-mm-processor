@@ -122,8 +122,8 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
     } else {
       logger.debug(`Skipped Invalid typeId`)
     }
-  } else if (event.payload.resource && event.payload.resource === 'reviewreviewSummation') {
-    if (event.topic === config.KAFKA_UPDATE_SUBMISSION_TOPIC) {
+  } else if (event.payload.resource && event.payload.resource === 'reviewSummation') {
+    if (event.topic === config.KAFKA_NEW_SUBMISSION_TOPIC) {
       const axios = Axios.create({
         baseURL: config.SUBMISSION_API_URL,
         timeout: config.SUBMISSION_TIMEOUT
