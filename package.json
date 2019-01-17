@@ -1,0 +1,57 @@
+{
+  "name": "legacy-mm-processor",
+  "version": "1.0.0",
+  "description": "Topcoder - Legacy MM Processor Application",
+  "main": "index.js",
+  "scripts": {
+    "start:docker": "npm --unsafe-perm install && node -r dotenv/config index",
+    "test:docker": "npm --unsafe-perm install && npm run test",
+    "clean": "rm -rf node_modules && rm -rf coverage && rm -rf .nyc_output",
+    "start": "node index",
+    "lint": "standard",
+    "lint:fix": "standard --fix",
+    "mock-submission-api": "node test/mock-submission-api",
+    "produce-test-event": "node test/produce-test-event",
+    "test": "npm run lint && nyc --reporter=html --reporter=text mocha test/tests.js --timeout 20000 --exit"
+  },
+  "dependencies": {
+    "async-mutex": "^0.1.3",
+    "legacy-processor-module": "git+https://github.com/topcoder-platform/legacy-processor-module.git#develop",
+    "axios": "^0.18.0",
+    "bluebird": "^3.5.3",
+    "config": "^1.30.0",
+    "dd-trace": "^0.7.2",
+    "dotenv": "^6.0.0",
+    "flatted": "^2.0.0",
+    "http-json-response": "^1.0.1",
+    "informix": "coderReview/node-informix.git#master",
+    "joi": "^13.4.0",
+    "lodash": "^4.17.10",
+    "no-kafka": "^3.2.10",
+    "tc-core-library-js": "appirio-tech/tc-core-library-js.git#feature/m2mtoken",
+    "topcoder-healthcheck-dropin": "^1.0.2",
+    "winston": "^2.4.2"
+  },
+  "devDependencies": {
+    "mocha": "^5.2.0",
+    "nyc": "^12.0.2",
+    "standard": "^11.0.1",
+    "should": "^13.2.3"
+  },
+  "standard": {
+    "env": [
+      "mocha"
+    ],
+    "ignore": [
+      "docs/*",
+      "docker/*",
+      "coverage/*"
+    ]
+  },
+  "nyc": {
+    "exclude": [
+      "src/common/logger.js",
+      "test/*.js"
+    ]
+  }
+}
