@@ -7,7 +7,7 @@ DB_SERVER_NAME=$(eval "echo \$${ENV}_DB_SERVER_NAME")
 DB_SERVER_PORT=$(eval "echo \$${ENV}_DB_SERVER_PORT")
 
 # Builds Docker image of the app.
-TAG=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/legacy-sub-processor:$CIRCLE_SHA1
+TAG=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/legacy-mm-processor:$CIRCLE_SHA1
 
 echo "================================"
 echo "Creating lsp-asp images"
