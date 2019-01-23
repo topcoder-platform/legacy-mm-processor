@@ -8,7 +8,6 @@ const config = require('config')
 const Flatted = require('flatted')
 const Joi = require('joi')
 const logger = require('../common/logger')
-const { handleSubmission } = require('legacy-processor-module/AllSubmissionService')
 const LegacySubmissionIdService = require('legacy-processor-module/LegacySubmissionIdService')
 const { handleMarathonSubmission, updateReviewScore } = require('./MarathonSubmissionService')
 
@@ -128,17 +127,17 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
         baseURL: config.SUBMISSION_API_URL,
         timeout: config.SUBMISSION_TIMEOUT
       })
-    
+
       let reviewScore = _.get(event, 'payload.aggregateScore')
       let submissionId = _.get(event, 'payload.submissionId')
-      
+
       // M2M token necessary for pushing to Bus API
       let apiOptions = null
       if (m2m) {
         const token = await m2m.getMachineToken(config.AUTH0_CLIENT_ID, config.AUTH0_CLIENT_SECRET)
         apiOptions = { headers: { 'Authorization': `Bearer ${token}` } }
       }
-    
+
       let sub = await axios.get(`/submissions/${submissionId}`, apiOptions)
       sub = sub.data
       if (!sub.legacySubmissionId) {

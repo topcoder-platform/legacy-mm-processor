@@ -11,7 +11,6 @@ const logger = require('./src/common/logger')
 // })
 require('./src/bootstrap')
 
-
 const _ = require('lodash')
 const Kafka = require('no-kafka')
 const config = require('config')
@@ -47,7 +46,7 @@ const m2m = ((config.AUTH0_CLIENT_ID && config.AUTH0_CLIENT_SECRET) ? m2mAuth(_.
  * @param {Number} partition the partition
  * @private
  */
-function handleMessages(messages, topic, partition) {
+function handleMessages (messages, topic, partition) {
   return Promise.each(messages, (m) => {
     const messageValue = m.message.value ? m.message.value.toString('utf8') : null
     const messageInfo = `message from topic ${topic}, partition ${partition}, offset ${m.offset}: ${messageValue}`
@@ -61,8 +60,8 @@ function handleMessages(messages, topic, partition) {
 
         // Commit offset
         return consumer.commitOffset({
-            topic, partition, offset: m.offset
-          })
+          topic, partition, offset: m.offset
+        })
           .catch(err => {
             logger.error(`Failed to commit offset for ${messageInfo}: ${err.message}`)
             logger.error(util.inspect(err))
@@ -86,7 +85,7 @@ const idUploadGen = new IDGenerator(db, config.ID_SEQ_UPLOAD)
 const idSubmissionGen = new IDGenerator(db, config.ID_SEQ_SUBMISSION)
 
 // check if there is kafka connection alive
-function check() {
+function check () {
   if (!consumer.client.initialBrokers && !consumer.client.initialBrokers.length) {
     return false
   }

@@ -3,6 +3,7 @@
  */
 const _ = require('lodash')
 const config = require('config')
+const logger = require('../common/logger')
 const LegacySubmissionIdService = require('legacy-processor-module/LegacySubmissionIdService')
 
 /**
@@ -60,5 +61,6 @@ module.exports.updateReviewScore = async (Axios, m2m, event, db) => {
   // only handle new submission topic
   if (event.topic === config.KAFKA_NEW_SUBMISSION_TOPIC) {
     await LegacySubmissionIdService.updateReviewScore(db, sub.legacySubmissionId, reviewScore, testType)
+    logger.debug('Successfully processed MM message - Review score updated')
   }
 }
