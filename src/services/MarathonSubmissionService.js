@@ -13,7 +13,7 @@ const LegacySubmissionIdService = require('legacy-processor-module/LegacySubmiss
  * @param {Object} db the informix database
  * @param {Number} timestamp the timestamp
  */
-module.exports.handleMarathonSubmission = async (axios, event, db, timestamp) => {
+module.exports.handleMarathonSubmission = async (event, db, timestamp) => {
   let challengeId = _.get(event, 'payload.challengeId')
   let memberId = _.get(event, 'payload.memberId')
   let isExample = _.get(event, 'payload.isExample', 0)
@@ -25,6 +25,15 @@ module.exports.handleMarathonSubmission = async (axios, event, db, timestamp) =>
       isExample,
       url,
       timestamp
+    )
+  } else if (event.topic === config.KAFKA_UPDATE_SUBMISSION_TOPIC) {
+    await LegacySubmissionIdService.updateUpload(db, challengeId,
+      memberId,
+      event.payload.submissionPhaseId,
+      url,
+      event.payload.type,
+      event.payload.id
+      
     )
   }
 }

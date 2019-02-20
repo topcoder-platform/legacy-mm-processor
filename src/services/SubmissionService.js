@@ -9,8 +9,7 @@ const Flatted = require('flatted')
 const Joi = require('joi')
 const logger = require('../common/logger')
 const LegacySubmissionIdService = require('legacy-processor-module/LegacySubmissionIdService')
-const { handleSubmission } = require('legacy-processor-module/AllSubmissionService')
-const { updateReviewScore } = require('./MarathonSubmissionService')
+const { handleMarathonSubmission, updateReviewScore } = require('./MarathonSubmissionService')
 
 // Custom Joi type
 Joi.id = () => Joi.number().integer().positive().required()
@@ -124,11 +123,7 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
   }
 
   // for MM Review type
-  if(event.payload.resource && event.payload.resource === 'submission') {
-    if (event.topic === config.KAFKA_NEW_SUBMISSION_TOPIC) {
-
-    }
-  } else if (event.payload.resource && event.payload.resource === 'review') {
+  if (event.payload.resource && event.payload.resource === 'review') {
     const payloadTypes = config.PAYLOAD_TYPES.split(',').map(x => x.trim())
     if (event.payload.typeId && payloadTypes.includes(event.payload.typeId)) {
       await updateReviewScore(Axios, m2m, event, db)
@@ -158,10 +153,6 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
         throw new Error(`legacySubmissionId not found`)
       }
 
-      const subTrack = await getSubTrack(sub.challengeId)
-      logger.debug(`Challenge ${sub.challengeId} get subTrack ${subTrack}`)
-      const challangeSubtracks = config.CHALLENGE_SUBTRACK.split(',').map(x => x.trim())
-
       await LegacySubmissionIdService.updateReviewScore(db, sub.legacySubmissionId, reviewScore, 'finalScore')
     }
   } else {
@@ -172,8 +163,7 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
 
     // will convert to Date object by Joi and assume UTC timezone by default
     const timestamp = validationResult.value.timestamp.getTime()
-
-    await handleSubmission(Axios, event, db, m2m, idUploadGen, idSubmissionGen, timestamp)
+    await handleMarathonSubmission(event, db, timestamp)
   }
 }
 
