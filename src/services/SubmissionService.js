@@ -58,7 +58,10 @@ async function getSubmission (submissionId, m2m) {
       apiOptions = { headers: { 'Authorization': `Bearer ${token}` } }
     }
 
+    logger.info(`Fetching submission for ${submissionId}`)
     let sub = await axios.get(`/submissions/${submissionId}`, apiOptions)
+    logger.info(`Fetched submission for ${submissionId} - ${sub.data}`)
+
     return sub.data;
   } catch (err) {
     if (err.response) { // non-2xx response received
@@ -82,10 +85,11 @@ async function getSubmission (submissionId, m2m) {
  */
 async function getSubTrack (submissionId, m2m) {
   try {
-    const challengeId = await getSubmission(submissionId, m2m);
+    const submission = await getSubmission(submissionId, m2m);
 
+    logger.info(`Fetching challenge details for ${submission.challengeId}`)
     // attempt to fetch the subtrack
-    const result = await Axios.get(config.CHALLENGE_INFO_API.replace('{cid}', challengeId))
+    const result = await Axios.get(config.CHALLENGE_INFO_API.replace('{cid}', submission.challengeId))
     // use _.get to avoid access with undefined object
     return _.get(result.data, 'result.content[0].subTrack')
   } catch (err) {
