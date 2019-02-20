@@ -155,16 +155,7 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
 
       await LegacySubmissionIdService.updateReviewScore(db, sub.legacySubmissionId, reviewScore, 'finalScore')
     }
-  } else {
-    if (event.payload.resource !== 'submission') {
-      logger.debug(`Skipped event from resource ${event.payload.resource}`)
-      return
-    }
-
-    // will convert to Date object by Joi and assume UTC timezone by default
-    const timestamp = validationResult.value.timestamp.getTime()
-    await handleMarathonSubmission(event, db, timestamp)
-  }
+  } 
 }
 
 module.exports = {
