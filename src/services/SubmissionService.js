@@ -44,7 +44,7 @@ const eventSchema = Joi.object().keys({
  * @param {string} submissionId 
  * @returns {object} submission object
  */
-async function getSubmission (submissionId) {
+async function getSubmission (submissionId, m2m) {
   try {
     const axios = Axios.create({
       baseURL: config.SUBMISSION_API_URL,
@@ -80,9 +80,9 @@ async function getSubmission (submissionId) {
  * @param {string} challengeId - The id of the challenge.
  * @returns {string} The subtrack type of the challenge.
  */
-async function getSubTrack (submissionId) {
+async function getSubTrack (submissionId, m2m) {
   try {
-    const challengeId = await getSubmission(submissionId);
+    const challengeId = await getSubmission(submissionId, m2m);
 
     // attempt to fetch the subtrack
     const result = await Axios.get(config.CHALLENGE_INFO_API.replace('{cid}', challengeId))
@@ -158,7 +158,7 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
   }
 
   // attempt to retrieve the subTrack of the challenge
-  const subTrack = await getSubTrack(event.payload.submissionId)
+  const subTrack = await getSubTrack(event.payload.submissionId, m2m)
   logger.debug(`Challenge ${event.payload.challengeId} get subTrack ${subTrack}`)
   const challangeSubtracks = config.CHALLENGE_SUBTRACK.split(',').map(x => x.trim())
   if (!(subTrack && challangeSubtracks.includes(subTrack))) {
