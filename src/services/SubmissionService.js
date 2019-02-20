@@ -9,7 +9,8 @@ const Flatted = require('flatted')
 const Joi = require('joi')
 const logger = require('../common/logger')
 const LegacySubmissionIdService = require('legacy-processor-module/LegacySubmissionIdService')
-const { handleMarathonSubmission, updateReviewScore } = require('./MarathonSubmissionService')
+const { handleSubmission } = require('legacy-processor-module/AllSubmissionService')
+const { updateReviewScore } = require('./MarathonSubmissionService')
 
 // Custom Joi type
 Joi.id = () => Joi.number().integer().positive().required()
@@ -113,8 +114,21 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
     return
   }
 
+  // attempt to retrieve the subTrack of the challenge
+  const subTrack = await getSubTrack(event.payload.challengeId)
+  logger.debug(`Challenge ${event.payload.challengeId} get subTrack ${subTrack}`)
+  const challangeSubtracks = config.CHALLENGE_SUBTRACK.split(',').map(x => x.trim())
+  if (!(subTrack && challangeSubtracks.includes(subTrack))) {
+    logger.debug(`Skipping as NOT MM found in ${JSON.stringify(challangeSubtracks)}`)
+    return;
+  }
+
   // for MM Review type
-  if (event.payload.resource && event.payload.resource === 'review') {
+  if(event.payload.resource && event.payload.resource === 'submission') {
+    if (event.topic === config.KAFKA_NEW_SUBMISSION_TOPIC) {
+
+    }
+  } else if (event.payload.resource && event.payload.resource === 'review') {
     const payloadTypes = config.PAYLOAD_TYPES.split(',').map(x => x.trim())
     if (event.payload.typeId && payloadTypes.includes(event.payload.typeId)) {
       await updateReviewScore(Axios, m2m, event, db)
@@ -148,10 +162,7 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
       logger.debug(`Challenge ${sub.challengeId} get subTrack ${subTrack}`)
       const challangeSubtracks = config.CHALLENGE_SUBTRACK.split(',').map(x => x.trim())
 
-      if (subTrack && challangeSubtracks.includes(subTrack)) {
-        await LegacySubmissionIdService.updateReviewScore(db, sub.legacySubmissionId, reviewScore, 'finalScore')
-        logger.debug(`Successfully updated final score: ${JSON.stringify(event, null, 2)}`)
-      }
+      await LegacySubmissionIdService.updateReviewScore(db, sub.legacySubmissionId, reviewScore, 'finalScore')
     }
   } else {
     if (event.payload.resource !== 'submission') {
@@ -162,18 +173,7 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
     // will convert to Date object by Joi and assume UTC timezone by default
     const timestamp = validationResult.value.timestamp.getTime()
 
-    // attempt to retrieve the subTrack of the challenge
-    const subTrack = await getSubTrack(event.payload.challengeId)
-    logger.debug(`Challenge ${event.payload.challengeId} get subTrack ${subTrack}`)
-    const challangeSubtracks = config.CHALLENGE_SUBTRACK.split(',').map(x => x.trim())
-
-    if (subTrack && challangeSubtracks.includes(subTrack)) {
-      // process mm challenge submission
-      await handleMarathonSubmission(Axios, event, db, timestamp)
-      logger.debug(`Successful Processing of MM challenge submission message: ${JSON.stringify(event, null, 2)}`)
-    } else if (subTrack) {
-      logger.debug(`not found mm in ${JSON.stringify(challangeSubtracks)}`)
-    }
+    await handleSubmission(Axios, event, db, m2m, idUploadGen, idSubmissionGen, timestamp)
   }
 }
 
