@@ -163,7 +163,7 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
 
   // attempt to retrieve the subTrack of the challenge
   const subTrack = await getSubTrack(event.payload.submissionId, m2m)
-  logger.debug(`Challenge ${event.payload.challengeId} get subTrack ${subTrack}`)
+  logger.debug(`Challenge get subTrack ${subTrack}`)
   const challangeSubtracks = config.CHALLENGE_SUBTRACK.split(',').map(x => x.trim())
   if (!(subTrack && challangeSubtracks.includes(subTrack))) {
     logger.debug(`Skipping as NOT MM found in ${JSON.stringify(challangeSubtracks)}`)
@@ -183,7 +183,7 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
       let reviewScore = _.get(event, 'payload.aggregateScore')
       let submissionId = _.get(event, 'payload.submissionId')
 
-      let sub = await getSubmission(submissionId);
+      let sub = await getSubmission(submissionId, m2m);
       if (!sub.legacySubmissionId) {
         throw new Error(`legacySubmissionId not found`)
       }
