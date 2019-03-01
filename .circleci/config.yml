@@ -54,7 +54,7 @@ jobs:
             source awsenvconf
             ./buildenv.sh -e DEV -b dev-legacymmapp-deployvar
             source buildenvvar
-            ./master_deploy.sh -d ECS -e DEV -t $CIRCLE_SHA1 -s dev-legacymmapp-appvar
+            ./master_deploy.sh -d ECS -e DEV -t latest -s dev-legacymmapp-appvar -i lsp-app
  
   # Build & Deploy against production backend
   "build-prod":
@@ -79,9 +79,9 @@ jobs:
       - deploy:
           command: |
             source awsenvconf
-            ./buildenv.sh -e PROD -b dev-legacymmapp-deployvar
+            ./buildenv.sh -e PROD -b prod-legacymmapp-deployvar
             source buildenvvar
-            ./master_deploy.sh -d ECS -e RPOD -t $CIRCLE_SHA1 -s dev-legacymmapp-appvar
+            ./master_deploy.sh -d ECS -e PROD -t latest -s prod-legacymmapp-appvar -i lsp-app
 
 workflows:
   version: 2
