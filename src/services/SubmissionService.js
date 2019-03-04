@@ -8,7 +8,6 @@ const config = require('config')
 const Flatted = require('flatted')
 const Joi = require('joi')
 const logger = require('../common/logger')
-const { handleSubmission } = require('legacy-processor-module/AllSubmissionService')
 const LegacySubmissionIdService = require('legacy-processor-module/LegacySubmissionIdService')
 const { handleMarathonSubmission, updateReviewScore } = require('./MarathonSubmissionService')
 
@@ -39,15 +38,58 @@ const eventSchema = Joi.object().keys({
   }).required().unknown(true)
 })
 
+
+/**
+ * Get the submission
+ * @param {string} submissionId 
+ * @returns {object} submission object
+ */
+async function getSubmission (submissionId, m2m) {
+  try {
+    const axios = Axios.create({
+      baseURL: config.SUBMISSION_API_URL,
+      timeout: config.SUBMISSION_TIMEOUT
+    })
+
+    // M2M token necessary for pushing to Bus API
+    let apiOptions = null
+    if (m2m) {
+      const token = await m2m.getMachineToken(config.AUTH0_CLIENT_ID, config.AUTH0_CLIENT_SECRET)
+      apiOptions = { headers: { 'Authorization': `Bearer ${token}` } }
+    }
+
+    logger.info(`Fetching submission for ${submissionId}`)
+    let sub = await axios.get(`/submissions/${submissionId}`, apiOptions)
+    logger.info(`Fetched submission for ${submissionId} - ${sub.data}`)
+
+    return sub.data;
+  } catch (err) {
+    if (err.response) { // non-2xx response received
+      logger.error(`Submission API Error: ${Flatted.stringify({
+        data: err.response.data,
+        status: err.response.status,
+        headers: err.response.headers
+      }, null, 2)}`)
+    } else if (err.request) {
+      logger.error(`Submission API Error (request sent, no response): ${Flatted.stringify(err.request, null, 2)}`)
+    } else {
+      logger.error(util.inspect(err))
+    }
+  }
+}
+
 /**
  * Get the subtrack for a challenge.
  * @param {string} challengeId - The id of the challenge.
  * @returns {string} The subtrack type of the challenge.
  */
-async function getSubTrack (challengeId) {
+async function getSubTrack (submissionId, m2m) {
   try {
+    const submission = await getSubmission(submissionId, m2m);
+
+    logger.info(`Fetching challenge details for ${submission.challengeId}`)
     // attempt to fetch the subtrack
-    const result = await Axios.get(config.CHALLENGE_INFO_API.replace('{cid}', challengeId))
+    const result = await Axios.get(config.CHALLENGE_INFO_API.replace('{cid}', submission.challengeId))
     // use _.get to avoid access with undefined object
     return _.get(result.data, 'result.content[0].subTrack')
   } catch (err) {
@@ -114,6 +156,20 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
     return
   }
 
+  if (event.payload.resource === 'submission') {
+    logger.debug(`Skipped event from resource ${event.payload.resource}`)
+    return
+  }
+
+  // attempt to retrieve the subTrack of the challenge
+  const subTrack = await getSubTrack(event.payload.submissionId, m2m)
+  logger.debug(`Challenge get subTrack ${subTrack}`)
+  const challangeSubtracks = config.CHALLENGE_SUBTRACK.split(',').map(x => x.trim())
+  if (!(subTrack && challangeSubtracks.includes(subTrack))) {
+    logger.debug(`Skipping as NOT MM found in ${JSON.stringify(challangeSubtracks)}`)
+    return;
+  }
+
   // for MM Review type
   if (event.payload.resource && event.payload.resource === 'review') {
     const payloadTypes = config.PAYLOAD_TYPES.split(',').map(x => x.trim())
@@ -124,58 +180,17 @@ async function handle (value, db, m2m, idUploadGen, idSubmissionGen) {
     }
   } else if (event.payload.resource && event.payload.resource === 'reviewSummation') {
     if (event.topic === config.KAFKA_NEW_SUBMISSION_TOPIC) {
-      const axios = Axios.create({
-        baseURL: config.SUBMISSION_API_URL,
-        timeout: config.SUBMISSION_TIMEOUT
-      })
-    
       let reviewScore = _.get(event, 'payload.aggregateScore')
       let submissionId = _.get(event, 'payload.submissionId')
-      
-      // M2M token necessary for pushing to Bus API
-      let apiOptions = null
-      if (m2m) {
-        const token = await m2m.getMachineToken(config.AUTH0_CLIENT_ID, config.AUTH0_CLIENT_SECRET)
-        apiOptions = { headers: { 'Authorization': `Bearer ${token}` } }
-      }
-    
-      let sub = await axios.get(`/submissions/${submissionId}`, apiOptions)
-      sub = sub.data
+
+      let sub = await getSubmission(submissionId, m2m);
       if (!sub.legacySubmissionId) {
         throw new Error(`legacySubmissionId not found`)
       }
 
-      const subTrack = await getSubTrack(sub.challengeId)
-      logger.debug(`Challenge ${sub.challengeId} get subTrack ${subTrack}`)
-      const challangeSubtracks = config.CHALLENGE_SUBTRACK.split(',').map(x => x.trim())
-
-      if (subTrack && challangeSubtracks.includes(subTrack)) {
-        await LegacySubmissionIdService.updateReviewScore(db, sub.legacySubmissionId, reviewScore, 'finalScore')
-        logger.debug(`Successfully updated final score: ${JSON.stringify(event, null, 2)}`)
-      }
+      await LegacySubmissionIdService.updateReviewScore(db, sub.legacySubmissionId, reviewScore, 'finalScore')
     }
-  } else {
-    if (event.payload.resource !== 'submission') {
-      logger.debug(`Skipped event from resource ${event.payload.resource}`)
-      return
-    }
-
-    // will convert to Date object by Joi and assume UTC timezone by default
-    const timestamp = validationResult.value.timestamp.getTime()
-
-    // attempt to retrieve the subTrack of the challenge
-    const subTrack = await getSubTrack(event.payload.challengeId)
-    logger.debug(`Challenge ${event.payload.challengeId} get subTrack ${subTrack}`)
-    const challangeSubtracks = config.CHALLENGE_SUBTRACK.split(',').map(x => x.trim())
-
-    if (subTrack && challangeSubtracks.includes(subTrack)) {
-      // process mm challenge submission
-      await handleMarathonSubmission(Axios, event, db, timestamp)
-      logger.debug(`Successful Processing of MM challenge submission message: ${JSON.stringify(event, null, 2)}`)
-    } else if (subTrack) {
-      logger.debug(`not found mm in ${JSON.stringify(challangeSubtracks)}`)
-    }
-  }
+  } 
 }
 
 module.exports = {
