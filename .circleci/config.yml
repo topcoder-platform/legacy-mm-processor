@@ -55,7 +55,6 @@ jobs:
             ./buildenv.sh -e DEV -b dev-legacymmapp-deployvar
             source buildenvvar
             ./master_deploy.sh -d ECS -e DEV -t latest -s dev-legacymmapp-appvar -i lsp-app
- 
   # Build & Deploy against production backend
   "build-prod":
     <<: *defaults
