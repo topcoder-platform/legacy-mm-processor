@@ -8,6 +8,7 @@ ENV KAFKA_VERSION 2.1.0
 ENV KAFKA_HOME /opt/kafka_"$SCALA_VERSION"-"$KAFKA_VERSION"
 
 RUN sed -i '/jessie-updates/d' /etc/apt/sources.list
+RUN sed -i '/jessie-backports/d' /etc/apt/sources.list
 # Install Kafka, Zookeeper and other needed things
 RUN apt-get -qq update && \
     apt-get -qq  install -y zookeeper wget supervisor dnsutils && \
