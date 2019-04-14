@@ -5,7 +5,8 @@ ARG servername=informix
 USER root
 RUN mkdir /app
 WORKDIR /home/informix
-#RUN sed -i '/jessie-updates/d' /etc/apt/sources.list
+
+RUN sed -i '/jessie-updates/d' /etc/apt/sources.list
 RUN apt-get -qq update && apt-get -qq install -y \
     wget gcc g++ make xz-utils python2.7 git
 

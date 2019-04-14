@@ -20,9 +20,6 @@ module.exports = {
   // The topic from which the app consumes events
   KAFKA_NEW_SUBMISSION_TOPIC: process.env.KAFKA_NEW_SUBMISSION_TOPIC,
 
-  // topic for update event
-  KAFKA_UPDATE_SUBMISSION_TOPIC: process.env.KAFKA_UPDATE_SUBMISSION_TOPIC,
-
   // The event originator
   KAFKA_NEW_SUBMISSION_ORIGINATOR: process.env.KAFKA_NEW_SUBMISSION_ORIGINATOR,
 
@@ -50,6 +47,9 @@ module.exports = {
   // The Informix Submission Table Sequence Name
   ID_SEQ_SUBMISSION: process.env.ID_SEQ_SUBMISSION || 'submission_id_seq',
 
+  // The Informix long_component_state Table Sequence Name
+  ID_SEQ_COMPONENT_STATE: process.env.ID_SEQ_COMPONENT_STATE || 'COMPONENT_STATE_SEQ',
+
   AUTH0_URL: process.env.AUTH0_URL, // Auth0 credentials for Submission Service
 
   AUTH0_AUDIENCE: process.env.AUTH0_AUDIENCE,
@@ -60,5 +60,9 @@ module.exports = {
 
   AUTH0_CLIENT_SECRET: process.env.AUTH0_CLIENT_SECRET,
 
-  CHALLENGE_INFO_API: process.env.CHALLENGE_INFO_API
+  AUTH0_PROXY_SERVER_URL: process.env.AUTH0_PROXY_SERVER_URL,
+
+  CHALLENGE_INFO_API: process.env.CHALLENGE_INFO_API,
+
+  CHALLENGE_SUBTRACK: 'MARATHON_MATCH, DEVELOP_MARATHON_MATCH'
 }
