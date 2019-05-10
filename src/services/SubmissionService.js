@@ -140,13 +140,6 @@ async function handle (value) {
   }
 
   if (event.payload.resource === 'review') {
-    // For 'review' resource it has more check to skip event
-    const payloadTypes = config.PAYLOAD_TYPES.split(',').map(x => x.trim())
-    if (!event.payload.typeId || !payloadTypes.includes(event.payload.typeId)) {
-      logger.debug(`Skipped Invalid typeId: ${event.payload.typeId}`)
-      return
-    }
-
     const testType = _.get(event, 'payload.metadata.testType')
     if (testType !== 'provisional') {
       logger.debug(`Skipped non-provisional testType: ${testType}`)
