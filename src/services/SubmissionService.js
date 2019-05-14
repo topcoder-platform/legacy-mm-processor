@@ -112,23 +112,9 @@ async function checkMMChallenge(event) {
 
 /**
  * Handle new submission message.
- * @param {String} value the message value (JSON string)
+ * @param {String} event the message value (JSON string)
  */
-async function handle(value) {
-  if (!value) {
-    logger.debug("Skipped null or empty event");
-    return;
-  }
-
-  // Parse JSON string to get the event
-  let event;
-  try {
-    event = JSON.parse(value);
-  } catch (err) {
-    logger.debug(`Skipped non well-formed JSON message: ${err.message}`);
-    return;
-  }
-
+async function handle(event) {
   if (!event) {
     logger.debug("Skipped null or empty event");
     return;
@@ -181,25 +167,31 @@ async function handle(value) {
     event.topic === config.KAFKA_NEW_SUBMISSION_TOPIC
   ) {
     // Handle new submission
-
     const timestamp = validationResult.value.timestamp.getTime();
 
-    const patchObject = await LegacySubmissionIdService.addSubmission(
-      event.payload.id,
-      event.payload.challengeId,
-      event.payload.memberId,
-      event.payload.submissionPhaseId,
-      event.payload.url,
-      event.payload.type,
-      timestamp,
-      true
-    );
+    logger.debug(`Started adding submission for ${event.payload.id}`);
+    try {
+      const patchObject = await LegacySubmissionIdService.addSubmission(
+        event.payload.id,
+        event.payload.challengeId,
+        event.payload.memberId,
+        event.payload.submissionPhaseId,
+        event.payload.url,
+        event.payload.type,
+        timestamp,
+        true
+      );
 
-    logger.debug(
-      `Successfully processed MM message - Patched to the Submission API: id ${
-        event.payload.id
-      }, patch: ${JSON.stringify(patchObject)}`
-    );
+      logger.debug(
+        `Successfully processed MM message - Patched to the Submission API: id ${
+          event.payload.id
+        }, patch: ${JSON.stringify(patchObject)}`
+      );
+    } catch (error) {
+      logger.error(error);
+    }
+
+    
   } else if (
     event.payload.resource === "submission" &&
     event.topic === config.KAFKA_UPDATE_SUBMISSION_TOPIC
@@ -213,14 +205,22 @@ async function handle(value) {
       legacySubmissionId = submission.legacySubmissionId || 0;
     }
 
-    await LegacySubmissionIdService.updateUpload(
-      event.payload.challengeId,
-      event.payload.memberId,
-      event.payload.submissionPhaseId,
-      event.payload.url,
-      event.payload.type,
-      legacySubmissionId
+    logger.debug(
+      `Started updating URL for submission for ${legacySubmissionId}`
     );
+    try {
+      await LegacySubmissionIdService.updateUpload(
+        event.payload.challengeId,
+        event.payload.memberId,
+        event.payload.submissionPhaseId,
+        event.payload.url,
+        event.payload.type,
+        legacySubmissionId
+      );
+    } catch (error) {
+      logger.error(error);
+    }
+
     logger.debug(
       `Submission url updated, legacy submission id : ${legacySubmissionId} with url ${
         event.payload.url
@@ -235,14 +235,18 @@ async function handle(value) {
     validateSubmissionField(submission, "type");
     validateSubmissionField(submission, "legacySubmissionId");
 
-    await LegacySubmissionIdService.updateProvisionalScore(
-      submission.challengeId,
-      submission.memberId,
-      submission.submissionPhaseId,
-      submission.legacySubmissionId,
-      submission.type,
-      event.payload.score
-    );
+    try {
+      await LegacySubmissionIdService.updateProvisionalScore(
+        submission.challengeId,
+        submission.memberId,
+        submission.submissionPhaseId,
+        submission.legacySubmissionId,
+        submission.type,
+        event.payload.score
+      );
+    } catch (error) {
+      logger.error(error.message);
+    }
 
     logger.debug(
       "Successfully processed MM message - Provisional score updated"
@@ -254,12 +258,16 @@ async function handle(value) {
     validateSubmissionField(submission, "memberId");
     validateSubmissionField(submission, "legacySubmissionId");
 
-    await LegacySubmissionIdService.updateFinalScore(
-      submission.challengeId,
-      submission.memberId,
-      submission.legacySubmissionId,
-      event.payload.aggregateScore
-    );
+    try {
+      await LegacySubmissionIdService.updateFinalScore(
+        submission.challengeId,
+        submission.memberId,
+        submission.legacySubmissionId,
+        event.payload.aggregateScore
+      );
+    } catch (error) {
+      logger.error(error.message);
+    }
 
     logger.debug("Successfully processed MM message - Final score updated");
   }
