@@ -82,14 +82,15 @@ docker-compose up lsp-app
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event different-topic"` and verify that the app doesn't consume this message (no log)
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event null-message"` and verify that the app skips this message (log: `Skipped null or empty event`)
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event empty-message"` and verify that the app skips this message (log: `Skipped null or empty event`)
-- Run `docker exec -ti lsp-app bash -c "npm run produce-test-event invalid-json"` and verify that the app skips this message (log: `Skipped non well-formed JSON message: ...`)
-- Run `docker exec -ti lsp-app bash -c "npm run produce-test-event empty-json"` and verify that the app skips this message (log: `Skipped invalid event, reasons: "topic" is required ...`)
+- Run `docker exec -ti lsp-app bash -c "npm run produce-test-event invalid-json"` and verify that the app skips this message (log: `Skipped Invalid message JSON`)
+- Run `docker exec -ti lsp-app bash -c "npm run produce-test-event empty-json"` and verify that the app skips this message (log: `Skipped the message topic "undefined" doesn't match the Kafka topic submission.notification.create`)
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event invalid-payload"` and verify that the app skips this message (log: `Skipped invalid event, reasons: "timestamp" must be...`)
-- Run `docker exec -ti lsp-app bash -c "npm run produce-test-event wrong-topic"` and verify that the app skips this message (log: `Skipped event from topic wrong-topic`)
+- Run `docker exec -ti lsp-app bash -c "npm run produce-test-event wrong-topic"` and verify that the app skips this message (log: `Skipped the message topic "wrong-topic" doesn't match the Kafka topic submission.notification.create`)
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event wrong-originator"` and verify that the app skips this message (log: `Skipped event from topic wrong-originator`)
 
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event mm-submission"` and verify that the app has log like `Successfully processed MM message - Patched to the Submission API: id 118, patch: {"legacySubmissionId":60000}`.
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event mm-submission2"` and verify that the app has log like `Successfully processed MM message - Patched to the Submission API: id 119, patch: {"legacySubmissionId":60001}`.
+- Run `docker exec -ti lsp-app bash -c "npm run produce-test-event update-mm-url"` and verify that the app has log like `Successfully processed MM message - Submission url updated...`.
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event mm-provisional-score"` and verify that the app has log like `Successfully processed MM message - Provisional score updated`.
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event mm-provisional-score2"` and verify that the app has log like `Successfully processed MM message - Provisional score updated`.
 - Run `docker exec -ti lsp-app bash -c "npm run produce-test-event mm-final-score"` and verify that the app has log like `Successfully processed MM message - final score updated`.
