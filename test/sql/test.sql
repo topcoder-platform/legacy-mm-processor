@@ -145,8 +145,11 @@ UPDATE id_sequences SET next_block_start = 60000 WHERE name = 'submission_id_seq
 
 
 database informixoltp;
+INSERT INTO contest(contest_id, name) VALUES(2000, 'test contest 2000');
+INSERT INTO round(round_id, contest_id, name, round_type_id, rated_ind) VALUES(2000, 2000, 'test round 2000', 13, 0);
+
 INSERT INTO contest(contest_id, name) VALUES(2001, 'test contest 2001');
-INSERT INTO round(round_id, contest_id, name, round_type_id) VALUES(2001, 2001, 'test round 2001', 13);
+INSERT INTO round(round_id, contest_id, name, round_type_id, rated_ind) VALUES(2001, 2001, 'test round 2001', 13, 0);
 INSERT INTO round_segment(round_id, segment_id, start_time, end_time, status) VALUES(2001, 1, '2018-12-1 12:00:00', '2018-12-6 12:00:00', 'A');
 INSERT INTO round_segment(round_id, segment_id, start_time, end_time, status) VALUES(2001, 5, '2018-12-15 12:00:00', '2018-12-25 12:00:00', 'A');
 
