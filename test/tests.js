@@ -16,7 +16,7 @@ const logger = require('legacy-processor-module/common/logger')
 const constant = require('legacy-processor-module/common/constant')
 const {getKafkaOptions} = require('legacy-processor-module/KafkaConsumer')
 const {patchSubmission} = require('legacy-processor-module/LegacySubmissionIdService')
-const {sleep, expectTable, clearSubmissions} = require('legacy-processor-module/test/TestHelper')
+const {sleep, expectTable, clearSubmissions, informix} = require('legacy-processor-module/test/TestHelper')
 
 const {
   mockApi,
@@ -787,6 +787,7 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
 
   it('should handle (review final) mm challenge message successfully', async () => {
     await clearSubmissions()
+    await informix.query('update informixoltp:round set rated_ind=0 where round_id=2001')
 
     // Create 2 MM submissions and update their provisional score
     logMessages = []
@@ -834,10 +835,16 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       round_id: roundId,
       coder_id: sampleMMMessage.payload.memberId,
       point_total: sampleMMReviewProvisionalMessage.payload.score,
-      system_point_total: sampleMMReviewFinalMessage.payload.aggregateScore
+      system_point_total: sampleMMReviewFinalMessage.payload.aggregateScore,
+      rated_ind: 0,
+      old_rating: null,
+      old_vol: null,
+      placed: 1
     })
 
     // Update another submission's final score
+    await informix.query('update informixoltp:round set rated_ind=1 where round_id=2001')
+    await informix.query(`insert into informixoltp:long_comp_result(round_id, coder_id, new_rating, new_vol, rated_ind) values (1000, ${sampleMMMessage2.payload.memberId}, null, null, 1)`)
     logMessages = []
     m = { topic: config.KAFKA_NEW_SUBMISSION_TOPIC, message: { value: JSON.stringify(sampleMMReviewFinalMessage2) } }
     results = await producer.send(m)
@@ -858,7 +865,11 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       round_id: roundId,
       coder_id: sampleMMMessage2.payload.memberId,
       point_total: sampleMMReviewProvisionalMessage2.payload.score,
-      system_point_total: sampleMMReviewFinalMessage2.payload.aggregateScore
+      system_point_total: sampleMMReviewFinalMessage2.payload.aggregateScore,
+      rated_ind: 1,
+      old_rating: null,
+      old_vol: null,
+      placed: 1
     })
 
     // Check place is correct
@@ -868,13 +879,12 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
       placed: 2
     })
 
-    await expectTable('informixoltp:long_comp_result', 1, {
-      round_id: roundId,
-      coder_id: sampleMMMessage2.payload.memberId,
-      placed: 1
-    })
-
-    // Update final score again, place should be recalculated
+    // Update final score again, place should be recalculated, rated_ind/old_rating/old_vol should be updated
+    // Round 2000 has rated_ind as 0 and null new_rating/new_vol
+    // Round 1000 has rated_ind as 1 and non-null new_rating/new_vol
+    // Round 1000's new_rating/new_vol should be used
+    await informix.query(`insert into informixoltp:long_comp_result(round_id, coder_id, new_rating, new_vol, rated_ind) values (2000, ${sampleMMMessage2.payload.memberId}, null, null, 0)`)
+    await informix.query(`update informixoltp:long_comp_result set new_rating=1100, new_vol=1200 where round_id=1000 and coder_id=${sampleMMMessage2.payload.memberId}`)
     m = {
       topic: config.KAFKA_NEW_SUBMISSION_TOPIC,
       message: {
@@ -898,7 +908,12 @@ describe('Topcoder - Submission Legacy Processor Application', () => {
     await expectTable('informixoltp:long_comp_result', 1, {
       round_id: roundId,
       coder_id: sampleMMMessage2.payload.memberId,
-      placed: 2
+      point_total: sampleMMReviewProvisionalMessage2.payload.score,
+      system_point_total: sampleMMReviewFinalMessage.payload.aggregateScore - 1,
+      placed: 2,
+      rated_ind: 1,
+      old_rating: 1100,
+      old_vol: 1200
     })
   })
 })
