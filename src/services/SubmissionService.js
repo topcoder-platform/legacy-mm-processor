@@ -111,6 +111,7 @@ async function checkMMChallenge(event) {
   } catch (error) {
     logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`);
     logger.error(error);
+    return [false];
   }
 }
 
