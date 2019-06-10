@@ -170,7 +170,7 @@ async function handle(event) {
 
     logger.debug(`Started adding submission for ${event.payload.id}`);
     try {
-      const patchObject = await LegacySubmissionIdService.addSubmission(
+      const patchObject = await LegacySubmissionIdService.addMMSubmission(
         event.payload.id,
         event.payload.challengeId,
         event.payload.memberId,
