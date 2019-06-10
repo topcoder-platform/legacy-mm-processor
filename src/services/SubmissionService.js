@@ -187,7 +187,9 @@ async function handle(event) {
         }, patch: ${JSON.stringify(patchObject)}`
       );
     } catch (error) {
-      logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`)
+      logger.error(
+        `Failed to handle ${JSON.stringify(event)}: ${error.message}`
+      );
       logger.error(error);
     }
   } else if (
@@ -195,19 +197,26 @@ async function handle(event) {
     event.topic === config.KAFKA_UPDATE_SUBMISSION_TOPIC &&
     event.payload.url
   ) {
-    let legacySubmissionId = event.payload.legacySubmissionId;
-    if (!legacySubmissionId) {
-      // In case legacySubmissionId not present, try to get it from submission API
-      const submission = await LegacySubmissionIdService.getSubmission(
-        event.payload.id
-      );
-      legacySubmissionId = submission.legacySubmissionId || 0;
-    }
-
-    logger.debug(
-      `Started updating URL for submission for ${legacySubmissionId}`
-    );
     try {
+      let legacySubmissionId = event.payload.legacySubmissionId;
+      if (!legacySubmissionId) {
+        // In case legacySubmissionId not present, try to get it from submission API
+        const submission = await LegacySubmissionIdService.getSubmission(
+          event.payload.id
+        );
+
+        if (!submission.legacySubmissionId) {
+          throw new Error(
+            `legacySubmissionId not found for submission: ${submission.id}`
+          );
+        }
+        legacySubmissionId = submission.legacySubmissionId;
+      }
+
+      logger.debug(
+        `Started updating URL for submission for ${legacySubmissionId}`
+      );
+
       await LegacySubmissionIdService.updateUpload(
         event.payload.challengeId,
         event.payload.memberId,
@@ -223,19 +232,21 @@ async function handle(event) {
         }`
       );
     } catch (error) {
-      logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`)
+      logger.error(
+        `Failed to handle ${JSON.stringify(event)}: ${error.message}`
+      );
       logger.error(error);
     }
   } else if (event.payload.resource === "review") {
     // Handle provisional score
 
     // Validate required fields of submission
-    validateSubmissionField(submission, "memberId");
-    validateSubmissionField(submission, "submissionPhaseId");
-    validateSubmissionField(submission, "type");
-    validateSubmissionField(submission, "legacySubmissionId");
-
     try {
+      validateSubmissionField(submission, "memberId");
+      validateSubmissionField(submission, "submissionPhaseId");
+      validateSubmissionField(submission, "type");
+      validateSubmissionField(submission, "legacySubmissionId");
+
       await LegacySubmissionIdService.updateProvisionalScore(
         submission.challengeId,
         submission.memberId,
@@ -249,17 +260,19 @@ async function handle(event) {
         "Successfully processed MM message - Provisional score updated"
       );
     } catch (error) {
-      logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`)
+      logger.error(
+        `Failed to handle ${JSON.stringify(event)}: ${error.message}`
+      );
       logger.error(error);
     }
   } else if (event.payload.resource === "reviewSummation") {
     // Handle final score
 
     // Validate required fields of submission
-    validateSubmissionField(submission, "memberId");
-    validateSubmissionField(submission, "legacySubmissionId");
-
     try {
+      validateSubmissionField(submission, "memberId");
+      validateSubmissionField(submission, "legacySubmissionId");
+
       await LegacySubmissionIdService.updateFinalScore(
         submission.challengeId,
         submission.memberId,
@@ -268,7 +281,9 @@ async function handle(event) {
       );
       logger.debug("Successfully processed MM message - Final score updated");
     } catch (error) {
-      logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`)
+      logger.error(
+        `Failed to handle ${JSON.stringify(event)}: ${error.message}`
+      );
       logger.error(error);
     }
   }
