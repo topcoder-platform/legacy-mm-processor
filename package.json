@@ -24,7 +24,7 @@
     "dotenv": "^6.0.0",
     "flatted": "^2.0.0",
     "http-json-response": "^1.0.1",
-    "informix": "coderReview/node-informix.git#master",
+    "informix": "^1.0.0",
     "joi": "^13.4.0",
     "lodash": "^4.17.10",
     "no-kafka": "^3.2.10",
