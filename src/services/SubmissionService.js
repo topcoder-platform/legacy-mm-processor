@@ -81,32 +81,38 @@ async function checkMMChallenge(event) {
   let challengeId;
   let submission; // This is the submission got from Submission API
 
-  if (event.payload.resource === "submission") {
-    challengeId = event.payload.challengeId;
-  } else {
-    // Event from 'review' and 'reviewSummation' resources does not have challengeId, but has submissionId instead
-    // We at first get submission from Submission API, the get challengeId from it
-    submission = await LegacySubmissionIdService.getSubmission(
-      event.payload.submissionId
-    );
-    validateSubmissionField(submission, "challengeId");
-    challengeId = submission.challengeId;
-  }
+  try {
+    if (event.payload.resource === "submission") {
+      challengeId = event.payload.challengeId;
+    } else {
+      // Event from 'review' and 'reviewSummation' resources does not have challengeId, but has submissionId instead
+      // We at first get submission from Submission API, the get challengeId from it
+      submission = await LegacySubmissionIdService.getSubmission(
+        event.payload.submissionId
+      );
+      validateSubmissionField(submission, "challengeId");
+      challengeId = submission.challengeId;
+    }
 
-  // Validate subTrack to be MM
-  const subTrack = await LegacySubmissionIdService.getSubTrack(challengeId);
-  logger.debug(`Challenge get subTrack ${subTrack}`);
-  const challangeSubtracks = config.CHALLENGE_SUBTRACK.split(",").map(x =>
-    x.trim()
-  );
-  if (!(subTrack && challangeSubtracks.includes(subTrack))) {
-    logger.debug(
-      `Skipped as NOT MM found in ${JSON.stringify(challangeSubtracks)}`
+    // Validate subTrack to be MM
+    const subTrack = await LegacySubmissionIdService.getSubTrack(challengeId);
+    logger.debug(`Challenge get subTrack ${subTrack}`);
+    const challangeSubtracks = config.CHALLENGE_SUBTRACK.split(",").map(x =>
+      x.trim()
     );
+    if (!(subTrack && challangeSubtracks.includes(subTrack))) {
+      logger.debug(
+        `Skipped as NOT MM found in ${JSON.stringify(challangeSubtracks)}`
+      );
+      return [false];
+    }
+
+    return [true, submission];
+  } catch (error) {
+    logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`);
+    logger.error(error);
     return [false];
   }
-
-  return [true, submission];
 }
 
 /**
@@ -267,7 +273,6 @@ async function handle(event) {
     }
   } else if (event.payload.resource === "reviewSummation") {
     // Handle final score
-
     // Validate required fields of submission
     try {
       validateSubmissionField(submission, "memberId");

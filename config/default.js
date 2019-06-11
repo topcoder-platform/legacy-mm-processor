@@ -38,6 +38,7 @@ module.exports = {
 
   // The Informix Database Name
   DB_NAME: process.env.DB_NAME || 'tcs_catalog@informixoltp_tcp',
+  DB_ID_NAME: process.env.DB_NAME || 'common_oltp@informixoltp_tcp',
 
   // CommonOLTP Database Name
   DB_ID_NAME: process.env.DB_ID_NAME || 'common_oltp@informixoltp_tcp',
