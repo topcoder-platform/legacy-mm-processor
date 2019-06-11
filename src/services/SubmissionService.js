@@ -176,7 +176,7 @@ async function handle(event) {
 
     logger.debug(`Started adding submission for ${event.payload.id}`);
     try {
-      const patchObject = await LegacySubmissionIdService.addSubmission(
+      const patchObject = await LegacySubmissionIdService.addMMSubmission(
         event.payload.id,
         event.payload.challengeId,
         event.payload.memberId,
@@ -213,9 +213,10 @@ async function handle(event) {
 
         if (!submission.legacySubmissionId) {
           throw new Error(
-            `legacySubmissionId not found for submission: ${event.payload.id}`
+            `legacySubmissionId not found for submission: ${submission.id}`
           );
         }
+        legacySubmissionId = submission.legacySubmissionId;
       }
 
       logger.debug(
@@ -245,8 +246,8 @@ async function handle(event) {
   } else if (event.payload.resource === "review") {
     // Handle provisional score
 
+    // Validate required fields of submission
     try {
-      // Validate required fields of submission
       validateSubmissionField(submission, "memberId");
       validateSubmissionField(submission, "submissionPhaseId");
       validateSubmissionField(submission, "type");
@@ -272,8 +273,8 @@ async function handle(event) {
     }
   } else if (event.payload.resource === "reviewSummation") {
     // Handle final score
+    // Validate required fields of submission
     try {
-      // Validate required fields of submission
       validateSubmissionField(submission, "memberId");
       validateSubmissionField(submission, "legacySubmissionId");
 
