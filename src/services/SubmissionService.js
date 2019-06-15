@@ -175,7 +175,7 @@ async function handle(event) {
     event.topic === config.KAFKA_NEW_SUBMISSION_TOPIC
   ) {
     // Handle new submission
-    const timestamp = validationResult.value.timestamp.getTime();
+    const timestamp = Date.parse(event.payload.created);
 
     logger.debug(`Started adding submission for ${event.payload.id}`);
     try {
