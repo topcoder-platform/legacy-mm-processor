@@ -47,6 +47,12 @@ module.exports = {
   // The Informix Database Name
   DB_NAME: process.env.DB_NAME || 'tcs_catalog',
 
+  DB_PORT: process.env.DB_PORT || '2020',
+
+  DB_PROTOCOL: process.env.DB_PROTOCOL || 'onsoctcp',
+
+  DB_LOCALE: process.env.DB_LOCALE || 'en_US.57372',
+
   // The CommonOLTP Database Name
   DB_ID_NAME: process.env.DB_ID_NAME || 'common_oltp',
 
