@@ -25,7 +25,7 @@ ENV DBDELIMITER "|"
 
 COPY docker/legacy-mm-processor/esql ${INFORMIXDIR}/bin/
 RUN chmod +x ${INFORMIXDIR}/bin/esql
-RRUN echo "informixoltp_tcp        onsoctcp        ${SERVERNAME:-informix}              sqlexec" \
+RUN echo "informixoltp_tcp        onsoctcp        ${SERVERNAME:-informix}              sqlexec" \
   > ${INFORMIXDIR}/etc/sqlhosts.informixoltp_tcp
 RUN echo "sqlexec 2021/tcp" >> /etc/services
 RUN rm /usr/bin/python && ln -s /usr/bin/python2.7 /usr/bin/python
