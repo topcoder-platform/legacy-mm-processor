@@ -1,18 +1,18 @@
 /**
  * The service to handle new submission events for MM challenge.
  */
-const _ = require("lodash");
-const config = require("config");
-const Joi = require("joi");
+const _ = require('lodash');
+const config = require('config');
+const Joi = require('joi');
 
-const logger = require("legacy-processor-module/common/logger");
-const Schema = require("legacy-processor-module/Schema");
-const LegacySubmissionIdService = require("legacy-processor-module/LegacySubmissionIdService");
+const logger = require('legacy-processor-module/common/logger');
+const Schema = require('legacy-processor-module/Schema');
+const LegacySubmissionIdService = require('legacy-processor-module/LegacySubmissionIdService');
 
 // The event schema for "submission" resource
 const submissionSchema = Schema.createEventSchema({
   id: Joi.sid().required(),
-  resource: Joi.string().valid("submission"),
+  resource: Joi.string().valid('submission'),
   challengeId: Joi.id().required(),
   memberId: Joi.id().required(),
   submissionPhaseId: Joi.id().required(),
@@ -25,7 +25,7 @@ const submissionSchema = Schema.createEventSchema({
 // The event schema for "review" resource
 const reviewSchema = Schema.createEventSchema({
   id: Joi.sid().required(),
-  resource: Joi.string().valid("review"),
+  resource: Joi.string().valid('review'),
   submissionId: Joi.sid().required(),
   score: Joi.number()
     .min(0)
@@ -42,7 +42,7 @@ const reviewSchema = Schema.createEventSchema({
 // The event schema for "reviewSummation" resource
 const reviewSummationSchema = Schema.createEventSchema({
   id: Joi.sid().required(),
-  resource: Joi.string().valid("reviewSummation"),
+  resource: Joi.string().valid('reviewSummation'),
   submissionId: Joi.sid().required(),
   aggregateScore: Joi.number()
     .min(0)
@@ -82,28 +82,22 @@ async function checkMMChallenge(event) {
   let submission; // This is the submission got from Submission API
 
   try {
-    if (event.payload.resource === "submission") {
+    if (event.payload.resource === 'submission') {
       challengeId = event.payload.challengeId;
     } else {
       // Event from 'review' and 'reviewSummation' resources does not have challengeId, but has submissionId instead
       // We at first get submission from Submission API, the get challengeId from it
-      submission = await LegacySubmissionIdService.getSubmission(
-        event.payload.submissionId
-      );
-      validateSubmissionField(submission, "challengeId");
+      submission = await LegacySubmissionIdService.getSubmission(event.payload.submissionId);
+      validateSubmissionField(submission, 'challengeId');
       challengeId = submission.challengeId;
     }
 
     // Validate subTrack to be MM
     const subTrack = await LegacySubmissionIdService.getSubTrack(challengeId);
     logger.debug(`Challenge get subTrack ${subTrack}`);
-    const challangeSubtracks = config.CHALLENGE_SUBTRACK.split(",").map(x =>
-      x.trim()
-    );
+    const challangeSubtracks = config.CHALLENGE_SUBTRACK.split(',').map(x => x.trim());
     if (!(subTrack && challangeSubtracks.includes(subTrack))) {
-      logger.debug(
-        `Skipped as NOT MM found in ${JSON.stringify(challangeSubtracks)}`
-      );
+      logger.debug(`Skipped as NOT MM found in ${JSON.stringify(challangeSubtracks)}`);
       return [false];
     }
 
@@ -121,7 +115,7 @@ async function checkMMChallenge(event) {
  */
 async function handle(event) {
   if (!event) {
-    logger.debug("Skipped null or empty event");
+    logger.debug('Skipped null or empty event');
     return;
   }
 
@@ -131,19 +125,13 @@ async function handle(event) {
   }
 
   // Validate with specific event schema
-  const validationResult = Schema.validateEvent(
-    event,
-    schemas[event.payload.resource]
-  );
+  const validationResult = Schema.validateEvent(event, schemas[event.payload.resource]);
   if (!validationResult) {
     return;
   }
 
   // Check topic and originator
-  if (
-    event.topic !== config.KAFKA_NEW_SUBMISSION_TOPIC &&
-    event.topic !== config.KAFKA_UPDATE_SUBMISSION_TOPIC
-  ) {
+  if (event.topic !== config.KAFKA_AGGREGATE_SUBMISSION_TOPIC) {
     logger.debug(`Skipped event from topic ${event.topic}`);
     return;
   }
@@ -153,9 +141,9 @@ async function handle(event) {
     return;
   }
 
-  if (event.payload.resource === "review") {
-    const testType = _.get(event, "payload.metadata.testType");
-    if (testType !== "provisional") {
+  if (event.payload.resource === 'review') {
+    const testType = _.get(event, 'payload.metadata.testType');
+    if (testType !== 'provisional') {
       logger.debug(`Skipped non-provisional testType: ${testType}`);
       return;
     }
@@ -168,12 +156,7 @@ async function handle(event) {
     return;
   }
 
-  logger.debug(`submission ${submission} is a marathon. processing`);
-
-  if (
-    event.payload.resource === "submission" &&
-    event.topic === config.KAFKA_NEW_SUBMISSION_TOPIC
-  ) {
+  if (event.payload.resource === 'submission' && event.payload.originalTopic === config.KAFKA_NEW_SUBMISSION_TOPIC) {
     // Handle new submission
     const timestamp = Date.parse(event.payload.created);
 
@@ -196,35 +179,27 @@ async function handle(event) {
         }, patch: ${JSON.stringify(patchObject)}`
       );
     } catch (error) {
-      logger.error(
-        `Failed to handle ${JSON.stringify(event)}: ${error.message}`
-      );
+      logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`);
       logger.error(error);
     }
   } else if (
-    event.payload.resource === "submission" &&
-    event.topic === config.KAFKA_UPDATE_SUBMISSION_TOPIC &&
+    event.payload.resource === 'submission' &&
+    event.payload.originalTopic === config.KAFKA_UPDATE_SUBMISSION_TOPIC &&
     event.payload.url
   ) {
     try {
       let legacySubmissionId = event.payload.legacySubmissionId;
       if (!legacySubmissionId) {
         // In case legacySubmissionId not present, try to get it from submission API
-        const submission = await LegacySubmissionIdService.getSubmission(
-          event.payload.id
-        );
+        const submission = await LegacySubmissionIdService.getSubmission(event.payload.id);
 
         if (!submission.legacySubmissionId) {
-          throw new Error(
-            `legacySubmissionId not found for submission: ${submission.id}`
-          );
+          throw new Error(`legacySubmissionId not found for submission: ${submission.id}`);
         }
         legacySubmissionId = submission.legacySubmissionId;
       }
 
-      logger.debug(
-        `Started updating URL for submission for ${legacySubmissionId}`
-      );
+      logger.debug(`Started updating URL for submission for ${legacySubmissionId}`);
 
       await LegacySubmissionIdService.updateUpload(
         event.payload.challengeId,
@@ -241,20 +216,18 @@ async function handle(event) {
         }`
       );
     } catch (error) {
-      logger.error(
-        `Failed to handle ${JSON.stringify(event)}: ${error.message}`
-      );
+      logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`);
       logger.error(error);
     }
-  } else if (event.payload.resource === "review") {
+  } else if (event.payload.resource === 'review') {
     // Handle provisional score
 
     // Validate required fields of submission
     try {
-      validateSubmissionField(submission, "memberId");
-      validateSubmissionField(submission, "submissionPhaseId");
-      validateSubmissionField(submission, "type");
-      validateSubmissionField(submission, "legacySubmissionId");
+      validateSubmissionField(submission, 'memberId');
+      validateSubmissionField(submission, 'submissionPhaseId');
+      validateSubmissionField(submission, 'type');
+      validateSubmissionField(submission, 'legacySubmissionId');
 
       await LegacySubmissionIdService.updateProvisionalScore(
         submission.challengeId,
@@ -265,21 +238,17 @@ async function handle(event) {
         event.payload.score
       );
 
-      logger.debug(
-        "Successfully processed MM message - Provisional score updated"
-      );
+      logger.debug('Successfully processed MM message - Provisional score updated');
     } catch (error) {
-      logger.error(
-        `Failed to handle ${JSON.stringify(event)}: ${error.message}`
-      );
+      logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`);
       logger.error(error);
     }
-  } else if (event.payload.resource === "reviewSummation") {
+  } else if (event.payload.resource === 'reviewSummation') {
     // Handle final score
     // Validate required fields of submission
     try {
-      validateSubmissionField(submission, "memberId");
-      validateSubmissionField(submission, "legacySubmissionId");
+      validateSubmissionField(submission, 'memberId');
+      validateSubmissionField(submission, 'legacySubmissionId');
 
       await LegacySubmissionIdService.updateFinalScore(
         submission.challengeId,
@@ -287,11 +256,9 @@ async function handle(event) {
         submission.legacySubmissionId,
         event.payload.aggregateScore
       );
-      logger.debug("Successfully processed MM message - Final score updated");
+      logger.debug('Successfully processed MM message - Final score updated');
     } catch (error) {
-      logger.error(
-        `Failed to handle ${JSON.stringify(event)}: ${error.message}`
-      );
+      logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`);
       logger.error(error);
     }
   }

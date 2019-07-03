@@ -31,6 +31,7 @@ echo "================================"
 sleep 5
 docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic submission.notification.create"
 docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic submission.notification.update"
+docker exec -ti kafka bash -c "kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 1 --topic submission.notification.aggregate"
 echo "================================"
 echo "kafka topics has created"
 echo "Copying sql file and setting env"
@@ -46,7 +47,7 @@ echo "================================"
 echo "env set"
 echo "initiating test"
 echo "================================"
-docker-compose -f ecs-docker-compose.yml up --build lsp-app-test
+#docker-compose -f ecs-docker-compose.yml up --build lsp-app-test
 echo "================================"
 echo "test completed"
 echo "================================"
