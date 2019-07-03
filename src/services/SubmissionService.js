@@ -152,6 +152,7 @@ async function handle(event) {
   // Validate challenge is MM
   const [isMM, submission] = await checkMMChallenge(event);
   if (!isMM) {
+    logger.debug(`submission ${submission} is not a marathon. skipping processing`);
     return;
   }
 
