@@ -181,6 +181,7 @@ async function handle(event) {
     } catch (error) {
       logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`);
       logger.error(error);
+      throw error;
     }
   } else if (
     event.payload.resource === 'submission' &&
@@ -218,6 +219,7 @@ async function handle(event) {
     } catch (error) {
       logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`);
       logger.error(error);
+      throw error;
     }
   } else if (event.payload.resource === 'review') {
     // Handle provisional score
@@ -242,6 +244,7 @@ async function handle(event) {
     } catch (error) {
       logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`);
       logger.error(error);
+      throw error;
     }
   } else if (event.payload.resource === 'reviewSummation') {
     // Handle final score
@@ -260,6 +263,7 @@ async function handle(event) {
     } catch (error) {
       logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`);
       logger.error(error);
+      throw error;
     }
   }
 }
