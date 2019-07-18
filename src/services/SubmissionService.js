@@ -115,7 +115,7 @@ async function checkMMChallenge(event) {
       }`
     );
     logger.error(error);
-    return [false];
+    throw error;
   }
 }
 
