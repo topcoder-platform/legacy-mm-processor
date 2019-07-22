@@ -19,7 +19,7 @@ const submissionSchema = Schema.createEventSchema({
   type: Joi.string().required(),
   url: Joi.string()
     .uri()
-    .required(),
+    .required()
 });
 
 // The event schema for "review" resource
@@ -33,10 +33,10 @@ const reviewSchema = Schema.createEventSchema({
     .required(),
   metadata: Joi.object()
     .keys({
-      testType: Joi.string().required(),
+      testType: Joi.string().required()
     })
     .unknown(true)
-    .optional(),
+    .optional()
 });
 
 // The event schema for "reviewSummation" resource
@@ -47,13 +47,13 @@ const reviewSummationSchema = Schema.createEventSchema({
   aggregateScore: Joi.number()
     .min(0)
     .max(100)
-    .required(),
+    .required()
 });
 
 const schemas = {
   submission: submissionSchema,
   review: reviewSchema,
-  reviewSummation: reviewSummationSchema,
+  reviewSummation: reviewSummationSchema
 };
 
 /**
@@ -305,5 +305,5 @@ async function handle(event) {
 }
 
 module.exports = {
-  handle,
+  handle
 };
