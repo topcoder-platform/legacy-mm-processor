@@ -87,7 +87,9 @@ async function checkMMChallenge(event) {
     } else {
       // Event from 'review' and 'reviewSummation' resources does not have challengeId, but has submissionId instead
       // We at first get submission from Submission API, the get challengeId from it
-      submission = await LegacySubmissionIdService.getSubmission(event.payload.submissionId);
+      submission = await LegacySubmissionIdService.getSubmission(
+        event.payload.submissionId
+      );
       validateSubmissionField(submission, 'challengeId');
       challengeId = submission.challengeId;
     }
@@ -95,17 +97,25 @@ async function checkMMChallenge(event) {
     // Validate subTrack to be MM
     const subTrack = await LegacySubmissionIdService.getSubTrack(challengeId);
     logger.debug(`Challenge get subTrack ${subTrack}`);
-    const challangeSubtracks = config.CHALLENGE_SUBTRACK.split(',').map(x => x.trim());
+    const challangeSubtracks = config.CHALLENGE_SUBTRACK.split(',').map(x =>
+      x.trim()
+    );
     if (!(subTrack && challangeSubtracks.includes(subTrack))) {
-      logger.debug(`Skipped as NOT MM found in ${JSON.stringify(challangeSubtracks)}`);
+      logger.debug(
+        `Skipped as NOT MM found in ${JSON.stringify(challangeSubtracks)}`
+      );
       return [false];
     }
 
     return [true, submission];
   } catch (error) {
-    logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`);
+    logger.error(
+      `checkMMChallenge - Failed to handle ${JSON.stringify(event)}: ${
+        error.message
+      }`
+    );
     logger.error(error);
-    return [false];
+    throw error;
   }
 }
 
@@ -125,7 +135,10 @@ async function handle(event) {
   }
 
   // Validate with specific event schema
-  const validationResult = Schema.validateEvent(event, schemas[event.payload.resource]);
+  const validationResult = Schema.validateEvent(
+    event,
+    schemas[event.payload.resource]
+  );
   if (!validationResult) {
     return;
   }
@@ -152,11 +165,16 @@ async function handle(event) {
   // Validate challenge is MM
   const [isMM, submission] = await checkMMChallenge(event);
   if (!isMM) {
-    logger.debug(`submission ${submission} is not a marathon. skipping processing`);
+    logger.debug(
+      `submission ${submission} is not a marathon. skipping processing`
+    );
     return;
   }
 
-  if (event.payload.resource === 'submission' && event.payload.originalTopic === config.KAFKA_NEW_SUBMISSION_TOPIC) {
+  if (
+    event.payload.resource === 'submission' &&
+    event.payload.originalTopic === config.KAFKA_NEW_SUBMISSION_TOPIC
+  ) {
     // Handle new submission
     const timestamp = Date.parse(event.payload.created);
 
@@ -179,7 +197,9 @@ async function handle(event) {
         }, patch: ${JSON.stringify(patchObject)}`
       );
     } catch (error) {
-      logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`);
+      logger.error(
+        `Failed to handle ${JSON.stringify(event)}: ${error.message}`
+      );
       logger.error(error);
       throw error;
     }
@@ -192,15 +212,21 @@ async function handle(event) {
       let legacySubmissionId = event.payload.legacySubmissionId;
       if (!legacySubmissionId) {
         // In case legacySubmissionId not present, try to get it from submission API
-        const submission = await LegacySubmissionIdService.getSubmission(event.payload.id);
+        const submission = await LegacySubmissionIdService.getSubmission(
+          event.payload.id
+        );
 
         if (!submission.legacySubmissionId) {
-          throw new Error(`legacySubmissionId not found for submission: ${submission.id}`);
+          throw new Error(
+            `legacySubmissionId not found for submission: ${submission.id}`
+          );
         }
         legacySubmissionId = submission.legacySubmissionId;
       }
 
-      logger.debug(`Started updating URL for submission for ${legacySubmissionId}`);
+      logger.debug(
+        `Started updating URL for submission for ${legacySubmissionId}`
+      );
 
       await LegacySubmissionIdService.updateUpload(
         event.payload.challengeId,
@@ -217,7 +243,11 @@ async function handle(event) {
         }`
       );
     } catch (error) {
-      logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`);
+      logger.error(
+        `Update URL - Failed to handle ${JSON.stringify(event)}: ${
+          error.message
+        }`
+      );
       logger.error(error);
       throw error;
     }
@@ -240,9 +270,13 @@ async function handle(event) {
         event.payload.score
       );
 
-      logger.debug('Successfully processed MM message - Provisional score updated');
+      logger.debug(
+        'Successfully processed MM message - Provisional score updated'
+      );
     } catch (error) {
-      logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`);
+      logger.error(
+        `Failed to handle ${JSON.stringify(event)}: ${error.message}`
+      );
       logger.error(error);
       throw error;
     }
@@ -261,7 +295,9 @@ async function handle(event) {
       );
       logger.debug('Successfully processed MM message - Final score updated');
     } catch (error) {
-      logger.error(`Failed to handle ${JSON.stringify(event)}: ${error.message}`);
+      logger.error(
+        `Failed to handle ${JSON.stringify(event)}: ${error.message}`
+      );
       logger.error(error);
       throw error;
     }
