@@ -15,7 +15,7 @@ const submissionSchema = Schema.createEventSchema({
   resource: Joi.string().valid('submission'),
   challengeId: Joi.id().required(),
   memberId: Joi.id().required(),
-  submissionPhaseId: Joi.id().required(),
+  submissionPhaseId: Joi.alternatives().try(Joi.id(), Joi.string().uuid()),
   type: Joi.string().required(),
   url: Joi.string()
     .uri()

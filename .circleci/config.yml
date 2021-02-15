@@ -89,6 +89,7 @@ workflows:
             branches:
               only:
                 - develop
+                - feature/shapeup-v5-tasks
 
       # Production builds are exectuted only on tagged commits to the
       # master branch.
