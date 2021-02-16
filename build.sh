@@ -7,8 +7,10 @@ ENV=$1
 #DB_SERVER_PORT=$(eval "echo \$${ENV}_DB_SERVER_PORT")
 
 # Builds Docker image of the app.
-TAG=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/legacy-mm-processor:$CIRCLE_SHA1
+#TAG=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/legacy-mm-processor:$CIRCLE_SHA1
 TAG="lsp-app:latest"
+
+docker-compose -f ecs-docker-compose.yml build --build-arg servername=${DB_SERVER_NAME} --build-arg port=${DB_SERVER_PORT} lsp-app
 
 # Copies "node_modules" from the created image, if necessary for caching.
 docker create --name app $TAG
