@@ -120,10 +120,13 @@ async function getChallengePhaseId (challengeId, phaseName) {
   // The query to get phaseId
   const query = `select p.project_phase_id from project_phase p, phase_type_lu ptl
     where p.project_id = ${challengeId} and p.phase_type_id = ptl.phase_type_id and ptl.name = '${phaseName}'`;
+
+    logger.debug(`print query: ${query}`);
     const result = await executeQuery(dbOpts, query);
     if (result.length === 0) {
       throw new Error(`Empty result get phaseId for: challengeId ${challengeId}, phaseName ${phaseName}`);
     }
+    logger.debug('print result:' + JSON.stringify(result));
     return Number(result[0].project_phase_id);
 }
 
