@@ -101,5 +101,7 @@ module.exports = {
 
   CHALLENGE_INFO_API: process.env.CHALLENGE_INFO_API || 'http://mock-api-host:3000/challenges?filter=id={cid}', // {cid} gets replaced with challenge id
 
-  CHALLENGE_SUBTRACK: process.env.CHALLENGE_SUBTRACK || 'MARATHON_MATCH, DEVELOP_MARATHON_MATCH'
+  CHALLENGE_SUBTRACK: process.env.CHALLENGE_SUBTRACK || 'MARATHON_MATCH, DEVELOP_MARATHON_MATCH',
+
+  V5_CHALLENGE_API_URL: process.env.V5_CHALLENGE_API_URL || 'https://api.topcoder-dev.com/v5/challenges'
 };

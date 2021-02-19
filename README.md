@@ -40,6 +40,7 @@ You can update the configuration file or set values to the corresponding environ
 - `AUTH0_CLIENT_SECRET` auth0 client secret
 - `CHALLENGE_INFO_API` The challenge info api template with {cid} gets replaced with challenge id
 - `CHALLENGE_SUBTRACK` The sub track of marathon match challenge 
+- `V5_CHALLENGE_API_URL` The V5 Challenge API URL
 
  `./config/production.js`, `./config/staging.js`, `./config/test.js` will use same configuration variables as `./config/default.js` except `./config/test.js` will have new configurations for test only:
 - `MOCK_API_PORT` The mock server port for submission && challenge api
