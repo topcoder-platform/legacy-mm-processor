@@ -127,7 +127,7 @@ async function getChallengePhaseId (challengeId, phaseName) {
       throw new Error(`Empty result get phaseId for: challengeId ${challengeId}, phaseName ${phaseName}`);
     }
     logger.debug('print result:' + JSON.stringify(result));
-    return Number(result[0].project_phase_id);
+    return Number(result[0][0]);
 }
 
 /**
