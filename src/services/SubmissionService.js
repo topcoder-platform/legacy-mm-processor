@@ -8,6 +8,25 @@ const Joi = require('joi');
 const logger = require('legacy-processor-module/common/logger');
 const Schema = require('legacy-processor-module/Schema');
 const LegacySubmissionIdService = require('legacy-processor-module/LegacySubmissionIdService');
+const { executeQuery } = require('legacy-processor-module/Informix');
+const axios = require('axios');
+const m2mAuth = require('tc-core-library-js').auth.m2m;
+
+const m2m = m2mAuth(
+  _.pick(config, ['AUTH0_URL', 'AUTH0_AUDIENCE', 'TOKEN_CACHE_TIME', 'AUTH0_PROXY_SERVER_URL'])
+);
+
+// db informix option
+const dbOpts = {
+  server: config.DB_SERVER,
+  database: config.DB_NAME,
+  host: config.DB_HOST,
+  protocol: config.DB_PROTOCOL,
+  port: config.DB_PORT,
+  username: config.DB_USERNAME,
+  password: config.DB_PASSWORD,
+  locale: config.DB_LOCALE,
+};
 
 // The event schema for "submission" resource
 const submissionSchema = Schema.createEventSchema({
@@ -15,7 +34,8 @@ const submissionSchema = Schema.createEventSchema({
   resource: Joi.string().valid('submission'),
   challengeId: Joi.id().required(),
   memberId: Joi.id().required(),
-  submissionPhaseId: Joi.id().required(),
+  submissionPhaseId: Joi.sid().required(),
+  v5ChallengeId: Joi.string().uuid(),
   type: Joi.string().required(),
   url: Joi.string()
     .uri()
@@ -69,6 +89,48 @@ function validateSubmissionField(submission, field) {
 }
 
 /**
+ * Test if the id is UUID
+ * @param {String} id the id
+ * @returns {Boolean} true if it's a uuid
+ */
+function isUuid (id) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)
+}
+
+/**
+ * Get phase name from phase id
+ * @param {String} challengeUuid v5 challenge id
+ * @param {*} phaseId v5 submission phase id
+ * @returns {String} phase name
+ */
+async function getPhaseName (challengeUuid, phaseId) {
+  const token = await m2m.getMachineToken(config.AUTH0_CLIENT_ID, config.AUTH0_CLIENT_SECRET);
+  const res = await axios.get(`${config.V5_CHALLENGE_API_URL}/${challengeUuid}`, { headers: { Authorization: `Bearer ${token}` } });
+  return _.get(_.find(_.get(res, 'data.phases', []), ['id', phaseId]), 'name');
+}
+
+/**
+ * Get submission phase id
+ * @param {Object} connection Informix db connectio object
+ * @param {Number} challengeId challenge id
+ * @param {String} phaseName phase name
+ * @returns {Number} phase id
+ */
+async function getChallengePhaseId (challengeId, phaseName) {
+  // The query to get phaseId
+  const query = `select p.project_phase_id from project_phase p, phase_type_lu ptl
+    where p.project_id = ${challengeId} and p.phase_type_id = ptl.phase_type_id and ptl.name = '${phaseName}'`;
+
+    logger.debug(`print query: ${query}`);
+    const result = await executeQuery(dbOpts, query);
+    if (result.length === 0) {
+      throw new Error(`Empty result get phaseId for: challengeId ${challengeId}, phaseName ${phaseName}`);
+    }
+    logger.debug('print result:' + JSON.stringify(result));
+    return Number(result[0][0]);
+}
+
+/**
  * Check challenge is MM.
  * It returns an array, the first value indicates whether this is a MM challenge, the second
  * value is the submission got from Submission API (when event is from 'review' and 'reviewSummation' resources).
@@ -84,6 +146,14 @@ async function checkMMChallenge(event) {
   try {
     if (event.payload.resource === 'submission') {
       challengeId = event.payload.challengeId;
+      // Change v5 submissionPhaseId to legacy submissionPhaseId
+      if (isUuid(event.payload.submissionPhaseId)) {
+        const phaseName = await getPhaseName(event.payload.v5ChallengeId, event.payload.submissionPhaseId);
+        if (phaseName) {
+          event.payload.submissionPhaseId = await getChallengePhaseId(event.payload.challengeId, phaseName);
+        }
+        logger.debug(`set submissionPhaseId ${event.payload.submissionPhaseId}`);
+      }
     } else {
       // Event from 'review' and 'reviewSummation' resources does not have challengeId, but has submissionId instead
       // We at first get submission from Submission API, the get challengeId from it
