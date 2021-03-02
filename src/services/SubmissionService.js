@@ -106,7 +106,7 @@ function isUuid (id) {
 async function getPhaseName (challengeUuid, phaseId) {
   const token = await m2m.getMachineToken(config.AUTH0_CLIENT_ID, config.AUTH0_CLIENT_SECRET);
   const res = await axios.get(`${config.V5_CHALLENGE_API_URL}/${challengeUuid}`, { headers: { Authorization: `Bearer ${token}` } });
-  return _.get(_.find(_.get(res, 'data.phases', []), ['id', phaseId]), 'name');
+  return _.get(_.find(_.get(res, 'data.phases', []), ['phaseId', phaseId]), 'name');
 }
 
 /**
