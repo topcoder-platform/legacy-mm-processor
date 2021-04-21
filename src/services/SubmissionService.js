@@ -160,6 +160,14 @@ async function checkMMChallenge(event) {
       submission = await LegacySubmissionIdService.getSubmission(
         event.payload.submissionId
       );
+      // Change v5 submissionPhaseId to legacy submissionPhaseId
+      if (isUuid(submission.submissionPhaseId)) {
+        const phaseName = await getPhaseName(submission.v5ChallengeId, submission.submissionPhaseId);
+        if (phaseName) {
+          submission.submissionPhaseId = await getChallengePhaseId(submission.challengeId, phaseName);
+        }
+        logger.debug(`set submissionPhaseId ${submission.submissionPhaseId}`);
+      }
       validateSubmissionField(submission, 'challengeId');
       challengeId = submission.challengeId;
     }
