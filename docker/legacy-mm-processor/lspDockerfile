@@ -43,5 +43,7 @@ ENV LICENSE accept
 
 WORKDIR /app
 COPY . .
+RUN npm config set unsafe-perm true
+RUN git config --global url."https://git@".insteadOf git://
 RUN npm --unsafe-perm install
 ENTRYPOINT [ "npm" ]
