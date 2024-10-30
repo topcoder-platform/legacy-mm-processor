@@ -29,7 +29,7 @@
     "lodash": "^4.17.10",
     "moment": "^2.24.0",
     "moment-timezone": "^0.5.26",
-    "no-kafka": "^3.2.10",
+    "no-kafka": "^3.4.3",
     "q": "^1.5.1",
     "tc-core-library-js": "appirio-tech/tc-core-library-js.git#v2.6",
     "topcoder-bus-api-wrapper": "^1.0.1",
