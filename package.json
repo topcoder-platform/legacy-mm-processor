@@ -27,7 +27,7 @@
     "joi": "^13.4.0",
     "legacy-processor-module": "git+https://github.com/topcoder-platform/legacy-processor-module.git#v1.0.0",
     "lodash": "^4.17.10",
-    "moment": "^2.24.0",
+    "moment": "^2.29.4",
     "moment-timezone": "^0.5.26",
     "no-kafka": "^3.4.3",
     "q": "^1.5.1",
