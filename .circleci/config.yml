@@ -51,7 +51,7 @@ jobs:
             source awsenvconf
             ./buildenv.sh -e DEV -b dev-legacymmapp-deployvar
             source buildenvvar
-            ./master_deploy.sh -d ECS -e DEV -t latest -s dev-global-appvar,dev-legacymmapp-appvar -i lsp-app
+            ./master_deploy.sh -d ECS -e DEV -t latest -s dev-global-appvar,dev-legacymmapp-appvar -i lsp-app -p FARGATE
   # Build & Deploy against production backend
   "build-prod":
     <<: *defaults
@@ -77,7 +77,7 @@ jobs:
             source awsenvconf
             ./buildenv.sh -e PROD -b prod-legacymmapp-deployvar
             source buildenvvar
-            ./master_deploy.sh -d ECS -e PROD -t latest -s prod-global-appvar,prod-legacymmapp-appvar -i lsp-app
+            ./master_deploy.sh -d ECS -e PROD -t latest -s prod-global-appvar,prod-legacymmapp-appvar -i lsp-app -p FARGATE
 
 workflows:
   version: 2
